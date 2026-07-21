@@ -7,10 +7,13 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Setup Android SDK
+        script: |
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
       - name: Install dependencies
         script: flutter pub get
       - name: Build APK
-        script: flutter build apk --release
+        script: flutter build apk --debug
     artifacts:
       - build/**/outputs/**/*.apk
     publishing:
