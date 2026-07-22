@@ -3,13 +3,15 @@ workflows:
     name: Android Build
     max_build_duration: 60
     environment:
-      flutter: stable
+      flutter: 3.29.3
       xcode: latest
       cocoapods: default
     scripts:
       - name: Setup Android SDK
         script: |
           sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
+      - name: Generate project metadata
+        script: flutter create --org com.bigdeals --project-name bigdeals_app .
       - name: Install dependencies
         script: flutter pub get
       - name: Build APK
