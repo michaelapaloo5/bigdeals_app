@@ -19,12 +19,13 @@ workflows:
           rm -rf build android/.gradle android/build android/app/build .dart_tool
 
           echo "=== Creating local.properties ==="
-          echo "sdk.dir=/usr/local/share/android-sdk" > android/local.properties
-          echo "flutter.sdk=/tmp/flutter" >> android/local.properties
-          echo "flutter.buildMode=debug" >> android/local.properties
-          echo "flutter.versionName=1.0.0" >> android/local.properties
-          echo "flutter.versionCode=1" >> android/local.properties
-          cat android/local.properties
+          cat > android/local.properties << 'EOF'
+          sdk.dir=/usr/local/share/android-sdk
+          flutter.sdk=/tmp/flutter
+          flutter.buildMode=debug
+          flutter.versionName=1.0.0
+          flutter.versionCode=1
+          EOF
 
           echo "=== Installing dependencies ==="
           flutter pub get
@@ -32,43 +33,31 @@ workflows:
           echo "=== Dump package_config.json ==="
           cat .dart_tool/package_config.json
 
-          echo "=== Fix package_config.json if needed ==="
-          dart -e '
-            import "dart:io";
-            import "dart:convert";
-            var f = File(".dart_tool/package_config.json");
-            var json = jsonDecode(f.readAsStringSync());
-            bool fixed = false;
-            if (!json.containsKey("rootPackage")) {
-              json["rootPackage"] = "bigdeals_app";
-              fixed = true;
-            }
-            var found = false;
-            for (var p in json["packages"]) {
-              if (p["name"] == "bigdeals_app") {
-                if (p["rootUri"] != "../") {
-                  p["rootUri"] = "../";
-                  fixed = true;
-                }
-                found = true;
-              }
-            }
-            if (!found) {
-              json["packages"].insert(0, {
-                "name": "bigdeals_app",
-                "rootUri": "../",
-                "packageUri": "lib/",
-                "languageVersion": "3.0"
-              });
-              fixed = true;
-            }
-            if (fixed) {
-              f.writeAsStringSync(JsonEncoder.withIndent("  ").convert(json));
-              print("FIXED package_config.json");
-            } else {
-              print("package_config.json is OK");
-            }
-          '
+          echo "=== Fix package_config.json with python3 ==="
+          python3 -c "
+          import json, os
+          path = '.dart_tool/package_config.json'
+          with open(path) as f:
+              data = json.load(f)
+          fixed = False
+          if 'rootPackage' not in data:
+              data['rootPackage'] = 'bigdeals_app'
+              fixed = True
+          for p in data.get('packages', []):
+              if p['name'] == 'bigdeals_app':
+                  if p.get('rootUri') != '../':
+                      p['rootUri'] = '../'
+                      fixed = True
+                  if 'packageUri' not in p:
+                      p['packageUri'] = 'lib/'
+                      fixed = True
+          if fixed:
+              with open(path, 'w') as f:
+                  json.dump(data, f, indent=2)
+              print('FIXED package_config.json')
+          else:
+              print('package_config.json is OK')
+          "
 
           echo "=== Dump package_config.json after fix ==="
           cat .dart_tool/package_config.json
