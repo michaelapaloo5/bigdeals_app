@@ -4,34 +4,7 @@
 # This file should be version controlled and should not be manually edited.
 
 version:
-  revision: "84fc5cbb22"
-  channel: "stable"
+  revision: "unknown"
+  channel: "unknown"
 
 project_type: app
-
-# User provided section
-
-# Tracks metadata for the flutter migrate command
-migration:
-  platforms:
-    - platform: root
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22
-    - platform: android
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22
-    - platform: ios
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22
-    - platform: web
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22
-    - platform: linux
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22
-    - platform: macos
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22
-    - platform: windows
-      create_revision: 84fc5cbb22
-      base_revision: 84fc5cbb22

@@ -25,7 +25,25 @@ workflows:
           echo "=== Installing dependencies ==="
           flutter pub get
 
-          echo "=== Dump package_config.json ==="
+          echo "=== Fixing package_config.json for native assets ==="
+          python3 -c "
+          import json, os
+          pc_path = '.dart_tool/package_config.json'
+          with open(pc_path, 'r') as f:
+              config = json.load(f)
+          config['rootPackage'] = 'bigdeals_app'
+          has_android = any('../android/' in p.get('rootUri', '') for p in config['packages'])
+          if not has_android:
+              config['packages'].insert(0, {
+                  'name': 'bigdeals_app',
+                  'rootUri': '../android/',
+                  'packageUri': '../lib/',
+                  'languageVersion': '3.0'
+              })
+          with open(pc_path, 'w') as f:
+              json.dump(config, f, indent=2)
+          print('package_config.json patched successfully')
+          "
           cat .dart_tool/package_config.json
 
           echo "=== Building APK ==="
