@@ -8,7 +8,7 @@ workflows:
     scripts:
       - name: Build Android APK
         script: |
-          set -e
+          set -ex
 
           echo "=== Downloading Flutter master ==="
           git clone --depth 1 https://github.com/flutter/flutter.git /tmp/flutter -b master
@@ -25,28 +25,31 @@ workflows:
           echo "=== Installing dependencies ==="
           flutter pub get
 
-          echo "=== Fixing package_config.json for native assets ==="
+          echo "=== Patching package_config.json ==="
           python3 -c "
-          import json, os
-          pc_path = '.dart_tool/package_config.json'
-          with open(pc_path, 'r') as f:
+          import json
+          with open('.dart_tool/package_config.json', 'r') as f:
               config = json.load(f)
           config['rootPackage'] = 'bigdeals_app'
-          has_android = any('../android/' in p.get('rootUri', '') for p in config['packages'])
-          if not has_android:
-              config['packages'].insert(0, {
-                  'name': 'bigdeals_app',
-                  'rootUri': '../android/',
-                  'packageUri': '../lib/',
-                  'languageVersion': '3.0'
-              })
-          with open(pc_path, 'w') as f:
+          for pkg in config['packages']:
+              if pkg['name'] == 'bigdeals_app':
+                  pkg['rootUri'] = '../android/'
+                  pkg['packageUri'] = '../lib/'
+                  break
+          with open('.dart_tool/package_config.json', 'w') as f:
               json.dump(config, f, indent=2)
-          print('package_config.json patched successfully')
           "
-          cat .dart_tool/package_config.json
+          echo "Patched package_config.json:"
+          python3 -c "
+          import json
+          with open('.dart_tool/package_config.json', 'r') as f:
+              config = json.load(f)
+          for p in config['packages']:
+              if p['name'] == 'bigdeals_app':
+                  print(json.dumps(p, indent=2))
+          "
 
           echo "=== Building APK ==="
-          flutter build apk --debug --android-skip-build-dependency-validation
+          flutter build apk --debug --no-pub --android-skip-build-dependency-validation
     artifacts:
       - build/**/outputs/**/*.apk
