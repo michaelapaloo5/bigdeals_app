@@ -17,18 +17,63 @@ workflows:
 
           echo "=== Cleaning old build artifacts ==="
           rm -rf build android/.gradle android/build android/app/build .dart_tool
-          rm -f android/local.properties
 
-          echo "=== Regenerating project metadata ==="
-          flutter create --org com.bigdeals --project-name bigdeals_app --platforms android .
-
-          echo "=== Verify local.properties points to our Flutter ==="
+          echo "=== Creating local.properties ==="
+          echo "sdk.dir=/usr/local/share/android-sdk" > android/local.properties
+          echo "flutter.sdk=/tmp/flutter" >> android/local.properties
+          echo "flutter.buildMode=debug" >> android/local.properties
+          echo "flutter.versionName=1.0.0" >> android/local.properties
+          echo "flutter.versionCode=1" >> android/local.properties
           cat android/local.properties
 
           echo "=== Installing dependencies ==="
           flutter pub get
 
+          echo "=== Dump package_config.json ==="
+          cat .dart_tool/package_config.json
+
+          echo "=== Fix package_config.json if needed ==="
+          dart -e '
+            import "dart:io";
+            import "dart:convert";
+            var f = File(".dart_tool/package_config.json");
+            var json = jsonDecode(f.readAsStringSync());
+            bool fixed = false;
+            if (!json.containsKey("rootPackage")) {
+              json["rootPackage"] = "bigdeals_app";
+              fixed = true;
+            }
+            var found = false;
+            for (var p in json["packages"]) {
+              if (p["name"] == "bigdeals_app") {
+                if (p["rootUri"] != "../") {
+                  p["rootUri"] = "../";
+                  fixed = true;
+                }
+                found = true;
+              }
+            }
+            if (!found) {
+              json["packages"].insert(0, {
+                "name": "bigdeals_app",
+                "rootUri": "../",
+                "packageUri": "lib/",
+                "languageVersion": "3.0"
+              });
+              fixed = true;
+            }
+            if (fixed) {
+              f.writeAsStringSync(JsonEncoder.withIndent("  ").convert(json));
+              print("FIXED package_config.json");
+            } else {
+              print("package_config.json is OK");
+            }
+          '
+
+          echo "=== Dump package_config.json after fix ==="
+          cat .dart_tool/package_config.json
+
           echo "=== Building APK ==="
-          flutter build apk --debug
+          flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/**/outputs/**/*.apk
