@@ -32,6 +32,3 @@ workflows:
           flutter build apk --debug
     artifacts:
       - build/**/outputs/**/*.apk
-    publishing:
-      artifacts:
-        - build/**/outputs/**/*.apk
