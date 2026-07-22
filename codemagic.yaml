@@ -3,21 +3,29 @@ workflows:
     name: Android Build
     max_build_duration: 60
     environment:
-      flutter: stable
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Install Flutter 3.32.0
+        script: |
+          git clone --depth 1 --branch 3.32.0 https://github.com/flutter/flutter.git /tmp/flutter
+          export PATH="/tmp/flutter/bin:$PATH"
+          flutter --version
       - name: Setup Android SDK
         script: |
           sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
-      - name: Clean and regenerate
+      - name: Generate project metadata
         script: |
-          rm -rf android/build android/app/build .dart_tool build
+          export PATH="/tmp/flutter/bin:$PATH"
           flutter create --org com.bigdeals --project-name bigdeals_app --platforms android .
       - name: Install dependencies
-        script: flutter pub get
+        script: |
+          export PATH="/tmp/flutter/bin:$PATH"
+          flutter pub get
       - name: Build APK
-        script: flutter build apk --debug
+        script: |
+          export PATH="/tmp/flutter/bin:$PATH"
+          flutter build apk --debug
     artifacts:
       - build/**/outputs/**/*.apk
     publishing:
