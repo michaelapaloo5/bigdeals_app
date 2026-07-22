@@ -6,25 +6,29 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Install Flutter 3.32.0
+      - name: Build Android APK
         script: |
-          git clone --depth 1 --branch 3.32.0 https://github.com/flutter/flutter.git /tmp/flutter
+          set -e
+
+          echo "=== Downloading Flutter master ==="
+          git clone --depth 1 https://github.com/flutter/flutter.git /tmp/flutter -b master
           export PATH="/tmp/flutter/bin:$PATH"
           flutter --version
-      - name: Setup Android SDK
-        script: |
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
-      - name: Generate project metadata
-        script: |
-          export PATH="/tmp/flutter/bin:$PATH"
+
+          echo "=== Cleaning old build artifacts ==="
+          rm -rf build android/.gradle android/build android/app/build .dart_tool
+          rm -f android/local.properties
+
+          echo "=== Regenerating project metadata ==="
           flutter create --org com.bigdeals --project-name bigdeals_app --platforms android .
-      - name: Install dependencies
-        script: |
-          export PATH="/tmp/flutter/bin:$PATH"
+
+          echo "=== Verify local.properties points to our Flutter ==="
+          cat android/local.properties
+
+          echo "=== Installing dependencies ==="
           flutter pub get
-      - name: Build APK
-        script: |
-          export PATH="/tmp/flutter/bin:$PATH"
+
+          echo "=== Building APK ==="
           flutter build apk --debug
     artifacts:
       - build/**/outputs/**/*.apk
